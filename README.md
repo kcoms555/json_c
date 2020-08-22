@@ -48,7 +48,7 @@ json_print(json_value) can print every type
         json_print(json); putchar('\n');
 	//json_fprint(stdout, json); putchar('\n'); //You can use this if you need to print into FILE*
 ```
-output
+##### output
 ```
 BOOLEAN or NULL error
 BOOLEAN or NULL error	<- They are printed because of wrong inputs('?nonejsontype?', 'somethingwrong'). It needs parseable JSON strings
@@ -86,7 +86,7 @@ You can get a JSON string with json_get_string(json_value, key1, key2, ...).
         //JSON String Demonstration
         printf("string : %s\n", json_get_string(json, "string"));
 ```
-output
+##### output
 ```
 string : It's a string
 ```
@@ -104,7 +104,7 @@ printf("number small integer(with json_get_double) : %f\n", json_get_double(json
 //print double type number as int
 printf("number double2(with json_get_int) : %d\n", json_get_int(json, "number double2"));
 ```
-output
+##### output
 ```
 number small integer : 1027
 number big integer(int) : -63861709
@@ -138,7 +138,7 @@ for(int i=0; i<json_len(json_get(json, "object")); i++){
         printf("object[%d] : ", i); json_print(json, "object", i); putchar('\n');
 }
 ```
-output
+##### output
 ```
 object : {
         "name": "some object",
@@ -168,7 +168,7 @@ for(int i=0; i<json_len(arr); i++){
 	printf("array[%d] : ", i); json_print(json, "array", i); putchar('\n');
 }
 ```
-output
+##### output
 ```
 array: [{
         "name": "object 1 in array",
@@ -224,7 +224,7 @@ printf("boolean false(with json_get_int): %d\n", json_get_int(json, "boolean fal
 printf("boolean true(with json_get_bool): %d\n", json_get_bool(json, "boolean true"));
 printf("boolean false(with json_get_bool): %d\n", json_get_bool(json, "boolean false"));
 ```
-output
+##### output
 ```
 boolean true(with json_print): true
 boolean false(with json_print): false
@@ -242,7 +242,7 @@ printf("null(with json_is_null): %d\n", json_is_null(json_get(json, "null")));
 //See how it will be shown
 printf("null(with json_get_int): %d\n", json_get_int(json, "null"));
 ```
-output
+##### output
 ```
 null: null
 null(with json_is_null): 1
@@ -256,7 +256,7 @@ printf("none-json-type: "); json_print(json, "none-json-type"); putchar('\n');
 //See how it will be shown
 printf("none-json-type(with json_get_int): %d\n", json_get_int(json, "none-json-type"));
 ```
-output
+##### output
 ```
 error tracing : (object)->(undefined)none-json-type
 none-json-type: undefined
