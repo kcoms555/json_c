@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <stdarg.h>
 enum JSON_TYPE { JSON_UNDEFINED = 0x0, JSON_NUMBER = 0x1, JSON_STRING=0x2, JSON_BOOLEAN=0x4, JSON_ARRAY=0x8, JSON_OBJECT=0x10, JSON_NULL=0x20, JSON_INTEGER=0x40, JSON_DOUBLE=0x80 };
-static enum KEYORVALUE{ KEY, VALUE};
+enum KEYORVALUE { KEY, VALUE };
 
 typedef struct json_small_stack_s{
 	int top;
@@ -35,47 +35,43 @@ static json_array * json_create_array(const char** json_message);
 static json_object * json_create_object(const char** json_message);
 
 #define LAST_ARG_MAGIC_NUMBER -1027
-//#define json_get_int(...) json_to_int(json_get_value(__VA_ARGS__, LAST_ARG_MAGIC_NUMBER))
-#define json_get_int(...) ((int)json_to_longlongint(json_get_value(__VA_ARGS__, LAST_ARG_MAGIC_NUMBER)))
-#define json_get_longlongint(...) json_to_longlongint(json_get_value(__VA_ARGS__, LAST_ARG_MAGIC_NUMBER))
-//#define json_get_float(...) json_to_float(json_get_value(__VA_ARGS__, LAST_ARG_MAGIC_NUMBER))
-#define json_get_float(...) ((float)json_to_double(json_get_value(__VA_ARGS__, LAST_ARG_MAGIC_NUMBER)))
-#define json_get_double(...) json_to_double(json_get_value(__VA_ARGS__, LAST_ARG_MAGIC_NUMBER))
-#define json_get_bool(...) json_to_bool(json_get_value(__VA_ARGS__, LAST_ARG_MAGIC_NUMBER))
-#define json_get_string(...) json_to_string(json_get_value(__VA_ARGS__, LAST_ARG_MAGIC_NUMBER))
+#define json_get_int(...) ((int)json_to_longlongint(json_get(__VA_ARGS__)))
+#define json_get_longlongint(...) json_to_longlongint(json_get(__VA_ARGS__))
+#define json_get_float(...) ((float)json_to_double(json_get(__VA_ARGS__)))
+#define json_get_double(...) json_to_double(json_get(__VA_ARGS__))
+#define json_get_bool(...) json_to_bool(json_get(__VA_ARGS__))
+#define json_get_string(...) json_to_string(json_get(__VA_ARGS__))
 
-//int json_to_int(json_value v);
 #define json_to_int(v) ((int)json_to_longlongint(v))
 long long int json_to_longlongint(json_value v);
-//float json_to_float(json_value v);
 #define json_to_float(v) ((float)json_to_float(v))
 double json_to_double(json_value v);
 bool json_to_bool(json_value v);
 char * json_to_string(json_value v);
+bool json_is_null(json_value v);
 enum JSON_TYPE json_get_type(json_value v);
 const char * const json_type_to_string(int type);
 
 //TODO read json file
 json_value json_read(const char * const path);
 
-#define json_get(...) json_get_value(__VA_ARGS__, LAST_ARG_MAGIC_NUMBER)
-json_value json_get_value(json_value v, const void* k, ...);
+#define json_get(...) (json_get_value(__VA_ARGS__, (void*)LAST_ARG_MAGIC_NUMBER))
+json_value json_get_value(json_value v, ...);
 static json_value json_get_from_json_value(json_value v, const void* k);
 static json_value json_get_from_object(json_object* json, const char* key);
 static json_value json_get_from_array(json_array* json, const int index);
+int json_len(json_value v);
+int json_get_last_index(json_value v);
 
 static void json_fprint_value(FILE * outfp, const json_value v, int tab);
 static void json_fprint_array(FILE * outfp, const json_array* json, int tab);
 static void json_fprint_object(FILE * outfp, const json_object* json, int tab);
-#define json_print(v) json_fprint(stdout, v);
-static void json_fprint(FILE * outfp, const json_value json);
-
-//static bool json_is_indexable(void * key);
+#define json_fprint(outfp, ...) (json_fprint_value(outfp, json_get_value(__VA_ARGS__, (void*)LAST_ARG_MAGIC_NUMBER), 0))
+#define json_print(...) json_fprint(stdout, __VA_ARGS__)
 
 static json_small_stack json_stacktrace_get_stack(void);
 static void json_stacktrace_push(json_small_stack * jss, int type, const void * key);
 static void json_stacktrace_print(FILE * fp, const json_small_stack * const jss);
-//static char * json_stacktrace_pop();
 
 void json_free(json_value jsonv);
 static void json_free_array(json_array* jsona);
@@ -83,16 +79,21 @@ static void json_free_object(json_object* jsono);
 
 //static int strcasecmp(const char* a, const char* b);
 
-static json_value json_get_value(json_value v, const void * key, ...) {
+json_value json_get_value(json_value v, ...) {
+	void * key = NULL;
+	void * vakey = NULL;
+	va_list ap;
+	va_start(ap, v);
+	key = va_arg(ap, void *);
+	if((int)key == LAST_ARG_MAGIC_NUMBER){ 
+		return v;
+		//fprintf(stderr, "json_get error : json_get needs two arguments at least and each of arguments must be a index(integer) or string(search key) except the first argument\n");
+		//return undefined_json;
+	}
 	if( ! (v.type == JSON_ARRAY || v.type == JSON_OBJECT)){
 		fprintf(stderr, "json_get error : the first argument of json_get should be an array or an object (type : %s)\n", json_type_to_string(v.type));
 		return undefined_json;
 	}
-	if((int)key == LAST_ARG_MAGIC_NUMBER){ 
-		fprintf(stderr, "json_get error : json_get needs two arguments at least and each of arguments must be a index(integer) or string(search key) except the first argument\n");
-		return undefined_json;
-	}
-	void * vakey = NULL;
 	json_small_stack jss = json_stacktrace_get_stack();
 
 	if(v.type == JSON_OBJECT) {
@@ -109,8 +110,6 @@ static json_value json_get_value(json_value v, const void * key, ...) {
 		return ret;
 	}
 
-	va_list ap;
-	va_start(ap, key);
 	while(1){
 		vakey = va_arg(ap, void *);
 		if((int)vakey == LAST_ARG_MAGIC_NUMBER) break; 
@@ -132,13 +131,13 @@ static json_value json_get_value(json_value v, const void * key, ...) {
 	}
     return ret;
 }
-static json_value json_get_from_json_value(json_value v, const void* key) {
+json_value json_get_from_json_value(json_value v, const void* key) {
     if (v.type == JSON_OBJECT) return json_get_from_object((json_object *)(v.value), (char *)key);
     if (v.type == JSON_ARRAY) return json_get_from_array((json_array *)(v.value), (int)key);
 	fprintf(stderr, "json_get_from_json_value error : cannot get a json value with key from json_value that is not an object nor an array(value type : %s)\n", json_type_to_string(v.type));
     return undefined_json;
 }
-static json_value json_get_from_object(json_object* json, const char* key) {
+json_value json_get_from_object(json_object* json, const char* key) {
 	//when the key is assummed as an index
 	if((int)key >=0 && (int)key <= json->last_index)
 		return json->values[(int)key];
@@ -157,12 +156,23 @@ static json_value json_get_from_object(json_object* json, const char* key) {
 	fprintf(stderr, "json_get_from_object error : no value corresponding to the key(%s)\n", key);
     return undefined_json;
 }
-static json_value json_get_from_array(json_array* json, const int index) {
+json_value json_get_from_array(json_array* json, const int index) {
     if (json == NULL || index < 0 || json->last_index < index){
 		fprintf(stderr, "json_get_from_array error : out of index\n");
 		return undefined_json;
 	}
     return json->values[index];
+}
+int json_len(json_value v){
+	return json_get_last_index(v)+1;
+}
+int json_get_last_index(json_value v){
+	if ( ! (v.type == JSON_ARRAY || v.type == JSON_OBJECT)){
+		fprintf(stderr, "json_get_last_index : the type of json_value is not a JSON_ARRAY nor a JSON_OBJECT");
+		return -1;
+	}
+	if(v.type == JSON_OBJECT) return ((json_object *)(v.value))->last_index;
+	if(v.type == JSON_ARRAY) return ((json_array *)(v.value))->last_index;
 }
 
 json_value json_string_to_value(const char** json_message) {
@@ -299,7 +309,7 @@ json_value json_string_to_value(const char** json_message) {
     }
 }
 
-static json_value json_create(const char* json_message) {
+json_value json_create(const char* json_message) {
     return json_string_to_value(&json_message);
 }
 json_array* json_create_array(const char** json_message) {
@@ -411,6 +421,9 @@ char * json_to_string(json_value v){
 	}
 	return (char *)(v.value);
 }
+bool json_is_null(json_value v){
+	return v.type == JSON_NULL;
+}
 enum JSON_TYPE json_get_type(json_value v){
 	return v.type;
 }
@@ -445,7 +458,7 @@ void json_fprint_array(FILE * outfp, const json_array* json, int tab) {
     for (int i = 0; i <= json->last_index; i++) {
         json_fprint_value(outfp, json->values[i], tab);
         if(json->last_index != i)
-            fprintf(outfp, ",");
+            fprintf(outfp, ", ");
     }
     fprintf(outfp, "]");
 }
@@ -464,10 +477,12 @@ void json_fprint_object(FILE * outfp, const json_object* json, int tab) {
     for (int i = 0; i < tab; i++) fprintf(outfp, "\t");
     fprintf(outfp, "}");
 }
+/*
 void json_fprint(FILE * outfp, const json_value json) {
     json_fprint_value(outfp, json, 0);
 	fprintf(outfp, "\n");
 }
+*/
 
 json_small_stack json_stacktrace_get_stack(void){
 	json_small_stack jss = {-1, {JSON_UNDEFINED, }, {NULL, }};
@@ -506,7 +521,7 @@ void json_stacktrace_print(FILE * fp, const json_small_stack * const jss){
 	
 }
 
-static void json_free(json_value jsonv) {
+void json_free(json_value jsonv) {
     int t = jsonv.type;
 	if (t == JSON_NUMBER || t == JSON_STRING || t == JSON_BOOLEAN) {
 		free(jsonv.value);
@@ -521,13 +536,13 @@ static void json_free(json_value jsonv) {
         //JSON_UNDEFINED or JSON_NULL. It don't have to call free.
     }
 }
-static void json_free_array(json_array* jsona) {
+void json_free_array(json_array* jsona) {
     if (jsona == NULL) return;
     for (int i = 0; i <= jsona->last_index; i++)
         json_free(jsona->values[i]);
     free(jsona);
 }
-static void json_free_object(json_object* jsono) {
+void json_free_object(json_object* jsono) {
     if (jsono == NULL) return;
     for (int i = 0; i <= jsono->last_index; i++) {
         free(jsono->keys[i]);
@@ -536,6 +551,7 @@ static void json_free_object(json_object* jsono) {
     free(jsono);
 }
 
+/*
 int strcasecmp(const char* a, const char* b) {
     while (true) {
         if (*a == '\0' || *b == '\0') {
@@ -548,3 +564,4 @@ int strcasecmp(const char* a, const char* b) {
         b++;
     }
 }
+*/
