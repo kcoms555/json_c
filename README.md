@@ -120,7 +120,7 @@ number double2(with json_get_int) : 1027
 ### Get a JSON value from a JSON Object
 You can get a JSON Object with json_get(json_value, key1, key2, ...).
 Or you can get a JSON value in a JSON Object you need (see the comment 'by key search2')
-You can use a array indexing way.
+You can use the array indexing way.
 ```
 //JSON Object Demonstration
 printf("object : "); json_print(json, "object"); putchar('\n');
