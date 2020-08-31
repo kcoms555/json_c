@@ -1,7 +1,7 @@
 # json_c
 Eazy and concise C JSON parser
 # Installation
-You can use it by simply import 'json_c.c' into your source code.
+You can use it by simply importing 'json_c.c' into your source code.
 ```
 #include "json_c.c"
 ```
