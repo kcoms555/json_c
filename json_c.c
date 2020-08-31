@@ -89,7 +89,6 @@ void json_free_object(json_object* jsono);
 #endif
 #endif
 
-#include "json_c.h"
 #ifndef __JSONC_BODY__
 #define __JSONC_BODY__
 #ifdef __cplusplus
