@@ -5,6 +5,7 @@ You can use it by simply importing 'json_c.c' into your source code.
 ```
 #include "json_c.c"
 ```
+If you need, you can easily split "json_c.c" to "json_c.h" and "json_c.c". I inserted a partition of the declation(header) and the definition(body) in "json_c.c"
 # usage
 ### Sample of a JSON Object
 ```
@@ -280,5 +281,4 @@ json_free(json);
 3. When you access a JSON value which is not exist, it will print a error tracker. It helps you to debug it.
 
 # Known Problems
-1. Escape Sequences are not implemented. (It's important. I will fix it as soon as possible)
-2. It supports upto 100 items in a single Object or an Array. (I will modify the source code to use dynamic allocation, if possible)
+1. It supports upto 100 items in a single Object or an Array. (I will modify the source code to use dynamic allocation, if possible)
