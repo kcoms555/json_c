@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "json_c.c"
 int main(void){
-	char * str = "\
+	const char * str = "\
 {\
 	\"string\":\"It's a string\"\
 	\"number small integer\":1027,\
@@ -34,7 +34,9 @@ int main(void){
 	json_value json = json_create(str);
 
 	//JSON Print Demonstration
-	json_print(json); putchar('\n');
+	//It supports to print a JSON object with FILE*
+	json_fprint(stdout, json); putchar('\n');
+	//json_print(json); putchar('\n');
 	putchar('\n');
 
 	//JSON String Demonstration
