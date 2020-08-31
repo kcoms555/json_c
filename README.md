@@ -282,4 +282,3 @@ json_free(json);
 # Known Problems
 1. Escape Sequences are not implemented. (It's important. I will fix it as soon as possible)
 2. It supports upto 100 items in a single Object or an Array. (I will modify the source code to use dynamic allocation, if possible)
-3. It may not support C++.
