@@ -13,10 +13,11 @@ extern "C"{
 #include <stdarg.h>
 
 #define JSON_MAX_INDEX 100
-#define LAST_ARG_MAGIC_NUMBER -1027
+#define JSON_LAST_ARG_MAGIC_NUMBER -1027
+#define JSON_STRBUFSIZE 256
 
 typedef enum json_type_enum { JSON_UNDEFINED = 0x0, JSON_NUMBER = 0x1, JSON_STRING=0x2, JSON_BOOLEAN=0x4, JSON_ARRAY=0x8, JSON_OBJECT=0x10, JSON_NULL=0x20, JSON_INTEGER=0x40, JSON_DOUBLE=0x80 } json_type;
-enum KEYORVALUE { KEY, VALUE };
+typedef enum json_keyorvalue_enum { JSON_KEY, JSON_VALUE } json_keyorvalue;
 typedef struct json_small_stack_s{
 	int top;
 	int type[20];
@@ -61,7 +62,7 @@ const char * const json_type_to_string(int type);
 //TODO read json file
 json_value json_read(const char * const path);
 
-#define json_get(...) (json_get_value(__VA_ARGS__, (void*)LAST_ARG_MAGIC_NUMBER))
+#define json_get(...) (json_get_value(__VA_ARGS__, (void*)JSON_LAST_ARG_MAGIC_NUMBER))
 json_value json_get_value(json_value v, ...);
 json_value json_get_from_json_value(json_value v, const void* k);
 json_value json_get_from_object(json_object* json, const char* key);
@@ -72,7 +73,7 @@ int json_get_last_index(json_value v);
 void json_fprint_value(FILE * outfp, const json_value v, int tab);
 void json_fprint_array(FILE * outfp, const json_array* json, int tab);
 void json_fprint_object(FILE * outfp, const json_object* json, int tab);
-#define json_fprint(outfp, ...) (json_fprint_value(outfp, json_get_value(__VA_ARGS__, (void*)LAST_ARG_MAGIC_NUMBER), 0))
+#define json_fprint(outfp, ...) (json_fprint_value(outfp, json_get_value(__VA_ARGS__, (void*)JSON_LAST_ARG_MAGIC_NUMBER), 0))
 #define json_print(...) json_fprint(stdout, __VA_ARGS__)
 
 json_small_stack json_stacktrace_get_stack(void);
@@ -103,7 +104,7 @@ json_value json_get_value(json_value v, ...) {
 	va_list ap;
 	va_start(ap, v);
 	key = va_arg(ap, void *);
-	if((int)key == LAST_ARG_MAGIC_NUMBER){ 
+	if((int)key == JSON_LAST_ARG_MAGIC_NUMBER){ 
 		return v;
 		//fprintf(stderr, "json_get error : json_get needs two arguments at least and each of arguments must be a index(integer) or string(search key) except the first argument\n");
 		//return undefined_json;
@@ -130,7 +131,7 @@ json_value json_get_value(json_value v, ...) {
 
 	while(1){
 		vakey = va_arg(ap, void *);
-		if((int)vakey == LAST_ARG_MAGIC_NUMBER) break; 
+		if((int)vakey == JSON_LAST_ARG_MAGIC_NUMBER) break; 
 
 		if(ret.type == JSON_OBJECT) {
 			if((int)key>=0 && (int)vakey <= ((json_object *)(ret.value))->last_index) json_stacktrace_push(&jss, ret.type, ((json_object *)(ret.value))->keys[(int)vakey]);
@@ -232,29 +233,76 @@ json_value json_string_to_value(const char** json_message) {
         case '\"':
         {
             jsonv.type = JSON_STRING;
-            const char* startptr = (*json_message);
-			//TODO : string process
-			/*
-			while (true) {
-				char ch = *((*json_message)++);
-				switch(ch){
-					case '\\':
-						
-				}
-				if ((isdigit(ch) || ch == '.' || ch=='e' || ch=='E' || ch=='+' || ch == '-') == false)
-					break;
-			}
-			*/
-            while (*((*json_message)++) != '\"');
-            int size = (int)(*json_message - startptr -1);
-            if (size < 0) size = 0;
-			char* str = (char*)malloc(sizeof(char) * (size + 1));
+			char* str = (char*)malloc(sizeof(char) * JSON_STRBUFSIZE);
+			int size = 0;
 			if (str == NULL) {
 				printf("string malloc error;\n");
 				return jsonv;
 			}
-			memcpy(str, startptr, sizeof(char) * size);
-			str[size] = '\0';
+
+			//TODO : string process
+			while (true) {
+				char ch = *((*json_message)++);
+				switch(ch){
+					case '\\':
+					{
+						char escape = *((*json_message)++);
+						switch(escape){
+							case '\"': str[size] = '\"'; break;
+							case '\\': str[size] = '\\'; break;
+							case '/': str[size] = '/'; break;
+							case 'b': str[size] = '\b'; break;
+							case 'f': str[size] = '\f'; break;
+							case 'n': str[size] = '\n'; break;
+							case 'r': str[size] = '\r'; break;
+							case 't': str[size] = '\t'; break;
+							//Parsing unicodes are not implemented
+							case 'u':{
+								str[size++] = '\\';
+								str[size] = 'u';
+								break;
+							}
+							/*
+							//TODO : Implement parsing unicodes;
+							case 'u':{
+								char chs[4] = {0,};
+								for(int i=0; i<4; i++){
+									chs[i] = tolower(*((*json_message)++));
+									printf("chs[%d] : %c(ascii:%d)\n", i, chs[i], chs[i]);
+									if(chs[i] >= 'a' && chs[i] <= 'f') chs[i] = chs[i] - 'a';
+									else if(chs[i] >= '0' && chs[i] <= '9') chs[i] = chs[i] - '0';
+									else{
+										fprintf(stderr, "json_string_to_value error: parse errer at escape string '\\u'\n");
+										break;
+									}
+								}
+								str[size++] = chs[0]*16+chs[1];
+								str[size] = chs[2]*16+chs[3]; //size will be increased at the end of while
+								break;
+							}
+							*/
+							default:
+								fprintf(stderr, "json_string_to_value error: parse errer at escape string '\\%c'\n", escape);
+						}
+						break;
+					}
+					case '\"':
+						str[size] = '\0';
+						goto JSON_STRBREAK;
+					default:
+						str[size] = ch;
+				}
+				size++;
+				if((size+1) % JSON_STRBUFSIZE == 0){
+					str = (char *)realloc(str, sizeof(char) * JSON_STRBUFSIZE * (1 + (size+1)/JSON_STRBUFSIZE));
+					printf("realloced : %s\n", str);
+					if(str == NULL){
+						printf("string malloc error;\n");
+						return jsonv;
+					}
+				}
+			}
+JSON_STRBREAK:
 			jsonv.value = str;
             return jsonv;
         }
@@ -366,21 +414,21 @@ json_object* json_create_object(const char** json_message) {
     memset(jsono, 0x00, sizeof(json_object));
     jsono->last_index = 0;
     int stack = 0;
-    int keyorvalue = KEY;
+    int keyorvalue = JSON_KEY;
     char c;
     while (c = *((*json_message)++)) {
         switch (c) {
         case '{':
             if (stack == 0) stack++;
             else {
-                if (keyorvalue == KEY) {
+                if (keyorvalue == JSON_KEY) {
                     printf("key cannot be an Object\n");
                     return jsono;
                 }
                 (*json_message)--;
                 jsono->values[jsono->last_index] = json_string_to_value(json_message);
                 jsono->last_index++;
-                keyorvalue = KEY;
+                keyorvalue = JSON_KEY;
             }
             break;
         case '}':
@@ -389,19 +437,19 @@ json_object* json_create_object(const char** json_message) {
         default:
             if (isalpha(c) || isdigit(c) || c == '[' || c == '{' || c == '\"' || c == '-' || c=='+' || c=='.') {
                 (*json_message)--;
-                if (keyorvalue == KEY) {
+                if (keyorvalue == JSON_KEY) {
                     json_value v = json_string_to_value(json_message);
                     if (v.type != JSON_STRING) {
                         printf("Key MUST be a string");
                         return jsono;
                     }
                     jsono->keys[jsono->last_index] = (char *)(v.value);
-                    keyorvalue = VALUE;
+                    keyorvalue = JSON_VALUE;
                 }
                 else {
                     jsono->values[jsono->last_index] = json_string_to_value(json_message);
                     jsono->last_index++;
-                    keyorvalue = KEY;
+                    keyorvalue = JSON_KEY;
                 }
             }
         }
