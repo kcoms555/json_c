@@ -73,7 +73,7 @@ int json_get_last_index(json_value v);
 void json_fprint_value(FILE * outfp, const json_value v, int tab);
 void json_fprint_array(FILE * outfp, const json_array* json, int tab);
 void json_fprint_object(FILE * outfp, const json_object* json, int tab);
-#define json_fprint(outfp, ...) (json_fprint_value(outfp, json_get_value(__VA_ARGS__, (void*)JSON_LAST_ARG_MAGIC_NUMBER), 0))
+#define json_fprint(outfp, ...) (json_fprint_value(outfp, json_get(__VA_ARGS__), 0))
 #define json_print(...) json_fprint(stdout, __VA_ARGS__)
 
 json_small_stack json_stacktrace_get_stack(void);
