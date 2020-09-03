@@ -236,8 +236,8 @@ json_to_longlongint error: the type of the json_value is not the type of JSON_NU
 boolean true(with json_get_bool): 1
 boolean false(with json_get_bool): 0
 ```
-### Get a JSON null
-You cannot get a anything from a type of JSON null. Use json_is_null(json_value).
+### Check whether it is JSON null or not
+You cannot get anything from the type of JSON null. Use json_is_null(json_value).
 ```
 //JSON Null Demonstration
 printf("null: "); json_print(json, "null"); putchar('\n');
