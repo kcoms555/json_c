@@ -5,7 +5,7 @@ You can use it by simply importing 'json_c.c' into your source code.
 ```
 #include "json_c.c"
 ```
-If you need, you can easily split "json_c.c" to "json_c.h" and "json_c.c". I inserted a partition of the declation(header) and the definition(body) in "json_c.c"
+If you need, you can easily split "json_c.c" into "json_c.h" and "json_c.c". I inserted a partition between the declation(header) and the definition(body) in "json_c.c"
 # usage
 ### Sample of a JSON Object
 ```
