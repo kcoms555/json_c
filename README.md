@@ -282,3 +282,4 @@ json_free(json);
 
 # Known Problems
 1. It supports upto 100 items in a single Object or an Array. (I will modify the source code to use dynamic allocation, if possible)
+2. It does not support unicodes yet. (somebody tell me how to implement it, if you know)
