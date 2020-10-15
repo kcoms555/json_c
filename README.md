@@ -49,7 +49,7 @@ json_print(json_value) can print every type
 ```
         //JSON Print Demonstration
         json_print(json); putchar('\n');
-	//json_fprint(stdout, json); putchar('\n'); //You can use this if you need to print into FILE*
+	//json_fprint(stdout, json); putchar('\n'); //You can use it if you need to print into FILE*
 ```
 ##### output
 ```
@@ -79,12 +79,12 @@ BOOLEAN or NULL error	<- They are printed because of wrong inputs('?nonejsontype
 }
 ```
 ### Get anything
-You can get a anything you need with 'json_get(json_value, key1, ...)' from a JSON Object or a JSON Array
-If you want to get 'name' of the object which is the second value of 'array', You can write 'json_get(json, "array", 1, "name)'. It is a similar to JS way 'json.array[1].name'
+You can get a anything you need with 'json_get(json_value, key1, ...)' from a JSON Object or Array
+If you want to get 'name' of the object which is the second value of 'array', You can write 'json_get(json, "array", 1, "name)'. It is similar to JS way such as 'json.array[1].name'
 
 ### Get a JSON string
 You can get a JSON string with json_get_string(json_value, key1, key2, ...).
-'key' can be a type of char*(as a key) or int(as a index)
+'key' can be a type of char*(as a key) or integer(as a index)
 ```
         //JSON String Demonstration
         printf("string : %s\n", json_get_string(json, "string"));
@@ -214,7 +214,7 @@ error tracing : (object)->(array)array(undefined)[8]
 array[8] : undefined
 ```
 ### Get a JSON boolean
-You can get a JSON boolean with json_get_bool(json_value, key1, key2, ...). json_get_int will not be not working and will print a error message.
+You can get a JSON boolean with json_get_bool(json_value, key1, key2, ...). Calling json_get_int will print a error message.
 ```
 //JSON Boolean Demonstration
 //case of json_print
@@ -252,7 +252,7 @@ null(with json_is_null): 1
 json_to_longlongint error: the type of the json_value is not the type of JSON_NUMBERnull(with json_get_int): 0
 ```
 ### Get something with parsed errer
-When json_create() reads a something unparseable, It sets its value as a undefined. Any functions printing or getting it will print an errer.
+When json_create() reads a something unparseable, It sets its value as a undefined. Any functions printing or getting them will print errers.
 ```
 //Demonstraion of undefined type (It is created when a json parser got error)
 printf("none-json-type: "); json_print(json, "none-json-type"); putchar('\n');
@@ -282,4 +282,4 @@ json_free(json);
 
 # Known Problems
 1. It supports upto 100 items in a single Object or an Array. (I will modify the source code to use dynamic allocation, if possible)
-2. It does not support unicodes yet. (somebody tell me how to implement it, if you know)
+2. It does not support unicodes yet. (If you know how to implement, then let me know!)
